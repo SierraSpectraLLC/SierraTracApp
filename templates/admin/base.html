@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Admin{% endblock %} — SierraTrac</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --blue: #2471A3; --blue-light: #EBF5FB; --blue-border: #D4E6F1;
+            --green: #1E8449; --green-bg: #E8F8EF;
+            --red: #C0392B; --red-bg: #FDECEA;
+            --amber: #B7950B; --amber-bg: #FEF9E7;
+            --g50: #FAFBFC; --g100: #F4F6F8; --g200: #E8ECF0; --g300: #CBD2DA;
+            --g400: #9CA8B4; --g500: #7D8A96; --g600: #566573; --g900: #1C2833;
+            --radius: 10px;
+        }
+        html { background: var(--g100); }
+        body { font-family: 'IBM Plex Sans', -apple-system, sans-serif; color: var(--g900); -webkit-font-smoothing: antialiased; }
+        a { color: var(--blue); text-decoration: none; }
+        button, input, select, textarea { font-family: inherit; }
+        input::placeholder, textarea::placeholder { color: var(--g400); }
+
+        /* ─── Layout ─── */
+        .admin-shell { display: flex; min-height: 100vh; }
+
+        .sidebar {
+            width: 240px; background: #fff; border-right: 1px solid var(--g200);
+            padding: 20px 0; display: flex; flex-direction: column; position: fixed;
+            top: 0; bottom: 0; left: 0; z-index: 40;
+        }
+        .sidebar-logo { padding: 0 20px 24px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--g200); margin-bottom: 16px; }
+        .sidebar-logo h1 { font-size: 18px; font-weight: 700; letter-spacing: -0.02em; }
+        .sidebar-logo span { font-size: 10px; background: var(--blue); color: #fff; padding: 2px 6px; border-radius: 4px; font-weight: 600; }
+
+        .nav-section { padding: 0 12px; margin-bottom: 8px; }
+        .nav-label { font-size: 10px; color: var(--g400); font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; padding: 8px 8px 4px; }
+        .nav-link {
+            display: flex; align-items: center; gap: 10px; padding: 9px 12px;
+            border-radius: 8px; font-size: 14px; font-weight: 500; color: var(--g600);
+            transition: all 0.12s; cursor: pointer; border: none; background: none; width: 100%; text-align: left;
+        }
+        .nav-link:hover { background: var(--g100); color: var(--g900); }
+        .nav-link.active { background: var(--blue-light); color: var(--blue); font-weight: 600; }
+        .nav-icon { width: 18px; text-align: center; font-size: 14px; flex-shrink: 0; }
+
+        .sidebar-footer { margin-top: auto; padding: 16px 20px; border-top: 1px solid var(--g200); }
+        .sidebar-user { font-size: 13px; font-weight: 600; color: var(--g900); }
+        .sidebar-role { font-size: 11px; color: var(--g500); margin-top: 1px; }
+        .sidebar-logout { font-size: 12px; color: var(--g400); margin-top: 8px; display: inline-block; }
+        .sidebar-logout:hover { color: var(--red); }
+
+        .main-content { flex: 1; margin-left: 240px; padding: 24px 32px; max-width: 1100px; }
+
+        /* ─── Page header ─── */
+        .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
+        .page-title { font-size: 22px; font-weight: 700; }
+        .page-sub { font-size: 14px; color: var(--g500); margin-top: 2px; }
+
+        /* ─── Cards ─── */
+        .card { background: #fff; border: 1px solid var(--g200); border-radius: var(--radius); }
+        .card-header { padding: 16px 20px; border-bottom: 1px solid var(--g200); display: flex; align-items: center; justify-content: space-between; }
+        .card-title { font-size: 15px; font-weight: 700; }
+        .card-body { padding: 20px; }
+
+        /* ─── Stat cards ─── */
+        .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 24px; }
+        .stat-card { background: #fff; border: 1px solid var(--g200); border-radius: var(--radius); padding: 16px 20px; }
+        .stat-num { font-size: 28px; font-weight: 700; font-family: 'IBM Plex Mono', monospace; line-height: 1.1; }
+        .stat-label { font-size: 12px; color: var(--g500); font-weight: 500; margin-top: 4px; }
+        .stat-num.blue { color: var(--blue); }
+        .stat-num.green { color: var(--green); }
+        .stat-num.amber { color: var(--amber); }
+        .stat-num.red { color: var(--red); }
+
+        /* ─── Table ─── */
+        .table-wrap { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th { text-align: left; padding: 10px 16px; font-size: 11px; color: var(--g500); font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; border-bottom: 1px solid var(--g200); background: var(--g50); }
+        td { padding: 12px 16px; border-bottom: 1px solid var(--g100); vertical-align: middle; }
+        tr:hover td { background: var(--g50); }
+        .td-mono { font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 500; }
+        .td-link { color: var(--blue); font-weight: 600; }
+
+        /* ─── Badges ─── */
+        .badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+        .badge-working { background: var(--green-bg); color: var(--green); }
+        .badge-nonworking { background: var(--red-bg); color: var(--red); }
+        .badge-unknown { background: var(--g100); color: var(--g500); }
+        .badge-refurbished { background: var(--amber-bg); color: var(--amber); }
+        .badge-pending { background: var(--amber-bg); color: var(--amber); }
+        .badge-admin { background: var(--blue-light); color: var(--blue); }
+        .badge-engineer { background: var(--green-bg); color: var(--green); }
+        .badge-viewer { background: var(--g100); color: var(--g500); }
+
+        /* ─── Buttons ─── */
+        .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: opacity 0.15s; }
+        .btn:active { opacity: 0.85; }
+        .btn-primary { background: var(--blue); color: #fff; }
+        .btn-secondary { background: var(--g100); color: var(--g600); border: 1px solid var(--g200); }
+        .btn-danger { background: var(--red-bg); color: var(--red); border: 1px solid rgba(192,57,43,0.15); }
+        .btn-sm { padding: 5px 10px; font-size: 12px; }
+        .btn-full { width: 100%; justify-content: center; padding: 12px; font-size: 14px; }
+
+        /* ─── Forms ─── */
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .form-grid .full { grid-column: 1 / -1; }
+        .field { margin-bottom: 0; }
+        .field-label { display: block; font-size: 12px; font-weight: 600; color: var(--g600); margin-bottom: 6px; }
+        .field-input {
+            width: 100%; padding: 10px 12px; background: var(--g50);
+            border: 1.5px solid var(--g200); border-radius: 8px; font-size: 14px;
+            color: var(--g900); outline: none; transition: border-color 0.15s;
+        }
+        .field-input:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(36,113,163,0.08); }
+        .field-mono { font-family: 'IBM Plex Mono', monospace; }
+        .field-textarea { min-height: 100px; resize: vertical; line-height: 1.6; }
+        .field-select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%237D8A96' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 36px; }
+        .field-hint { font-size: 11px; color: var(--g400); margin-top: 4px; }
+        .field-check { display: flex; align-items: center; gap: 8px; }
+        .field-check input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--blue); }
+        .field-check label { font-size: 13px; color: var(--g600); font-weight: 500; cursor: pointer; }
+
+        /* ─── Filters ─── */
+        .filter-bar { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+        .filter-bar .field-input { width: auto; min-width: 200px; padding: 8px 12px; font-size: 13px; }
+        .filter-bar .field-select { width: auto; min-width: 140px; padding: 8px 12px; font-size: 13px; }
+
+        /* ─── Flash messages ─── */
+        .flash { padding: 12px 16px; border-radius: 8px; font-size: 13px; font-weight: 500; margin-bottom: 16px; }
+        .flash-success { background: var(--green-bg); color: var(--green); border: 1px solid rgba(30,132,73,0.15); }
+        .flash-error { background: var(--red-bg); color: var(--red); border: 1px solid rgba(192,57,43,0.15); }
+        .flash-info { background: var(--blue-light); color: var(--blue); border: 1px solid var(--blue-border); }
+
+        /* ─── Pagination ─── */
+        .pagination { display: flex; gap: 4px; margin-top: 16px; justify-content: center; }
+        .pagination a, .pagination span {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 32px; height: 32px; border-radius: 6px; font-size: 13px; font-weight: 500;
+            border: 1px solid var(--g200); color: var(--g600);
+        }
+        .pagination .current { background: var(--blue); color: #fff; border-color: var(--blue); }
+
+        /* ─── Specs editor ─── */
+        .specs-editor { display: flex; flex-direction: column; gap: 8px; }
+        .spec-pair { display: flex; gap: 8px; align-items: center; }
+        .spec-pair input { flex: 1; }
+        .spec-remove { background: none; border: none; color: var(--g400); cursor: pointer; font-size: 16px; padding: 4px; }
+        .spec-remove:hover { color: var(--red); }
+
+        /* ─── Photo grid (admin) ─── */
+        .admin-photo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; margin-top: 12px; }
+        .admin-photo-card { border-radius: 8px; border: 1px solid var(--g200); overflow: hidden; position: relative; }
+        .admin-photo-card img { width: 100%; height: 120px; object-fit: cover; display: block; }
+        .admin-photo-caption { padding: 8px; font-size: 11px; color: var(--g600); }
+        .admin-photo-delete { position: absolute; top: 6px; right: 6px; }
+
+        /* ─── Responsive ─── */
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            .main-content { margin-left: 0; padding: 16px; }
+            .form-grid { grid-template-columns: 1fr; }
+            .stat-grid { grid-template-columns: 1fr 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-shell">
+        <nav class="sidebar">
+            <div class="sidebar-logo">
+                <h1>SierraTrac</h1>
+                <span>ADMIN</span>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-label">Overview</div>
+                <a href="{{ url_for('admin.dashboard') }}" class="nav-link {% if request.endpoint == 'admin.dashboard' %}active{% endif %}">
+                    <span class="nav-icon">◉</span> Dashboard
+                </a>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-label">Manage</div>
+                <a href="{{ url_for('admin.instruments_list') }}" class="nav-link {% if 'instrument' in (request.endpoint or '') %}active{% endif %}">
+                    <span class="nav-icon">⬡</span> Instruments
+                </a>
+            </div>
+
+            {% if user and user.role == 'admin' %}
+            <div class="nav-section">
+                <div class="nav-label">Admin</div>
+                <a href="{{ url_for('admin.users_list') }}" class="nav-link {% if 'user' in (request.endpoint or '') %}active{% endif %}">
+                    <span class="nav-icon">◎</span> Users
+                </a>
+            </div>
+            {% endif %}
+
+            <div class="nav-section" style="margin-top: 12px;">
+                <a href="{{ url_for('main.index') }}" class="nav-link" target="_blank">
+                    <span class="nav-icon">↗</span> View Public Site
+                </a>
+            </div>
+
+            <div class="sidebar-footer">
+                {% if user %}
+                <div class="sidebar-user">{{ user.name }}</div>
+                <div class="sidebar-role">{{ user.role|title }} · {{ user.organization or 'Sierra Spectra' }}</div>
+                <a href="{{ url_for('admin.logout') }}" class="sidebar-logout">Sign out</a>
+                {% endif %}
+            </div>
+        </nav>
+
+        <main class="main-content">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            {% for category, message in messages %}
+            <div class="flash flash-{{ category }}">{{ message }}</div>
+            {% endfor %}
+            {% endif %}
+            {% endwith %}
+
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+</body>
+</html>

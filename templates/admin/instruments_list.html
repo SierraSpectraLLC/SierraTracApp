@@ -1,0 +1,77 @@
+{% extends "admin/base.html" %}
+{% block title %}Instruments{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h2 class="page-title">Instruments</h2>
+        <p class="page-sub">{{ instruments.total }} total instrument{{ 's' if instruments.total != 1 else '' }}</p>
+    </div>
+    <a href="{{ url_for('admin.instrument_create') }}" class="btn btn-primary">+ New Instrument</a>
+</div>
+
+<!-- Filters -->
+<form class="filter-bar" method="GET">
+    <input type="text" name="q" value="{{ search_q }}" class="field-input" placeholder="Search S/N, model, manufacturer..." style="flex: 1;">
+    <select name="status" class="field-input field-select">
+        <option value="">All Statuses</option>
+        <option value="WORKING" {% if status_filter == 'WORKING' %}selected{% endif %}>Working</option>
+        <option value="NON-WORKING" {% if status_filter == 'NON-WORKING' %}selected{% endif %}>Non-Working</option>
+        <option value="REFURBISHED" {% if status_filter == 'REFURBISHED' %}selected{% endif %}>Refurbished</option>
+        <option value="UNKNOWN" {% if status_filter == 'UNKNOWN' %}selected{% endif %}>Unknown</option>
+    </select>
+    <button type="submit" class="btn btn-secondary">Filter</button>
+    {% if search_q or status_filter %}
+    <a href="{{ url_for('admin.instruments_list') }}" class="btn btn-secondary">Clear</a>
+    {% endif %}
+</form>
+
+<div class="card">
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>SierraTrac ID</th>
+                    <th>Serial Number</th>
+                    <th>Model</th>
+                    <th>Manufacturer</th>
+                    <th>Status</th>
+                    <th>Consignment</th>
+                    <th>Verified</th>
+                    <th>Updated</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for inst in instruments.items %}
+                <tr>
+                    <td><a href="{{ url_for('admin.instrument_edit', id=inst.id) }}" class="td-link">{{ inst.sierratrac_id }}</a></td>
+                    <td class="td-mono">{{ inst.serial_number }}</td>
+                    <td>{{ inst.model_number or '—' }}</td>
+                    <td style="font-size: 12px;">{{ inst.manufacturer or '—' }}</td>
+                    <td><span class="badge badge-{{ inst.status|lower|replace('-','') }}">{{ inst.status|replace('_',' ')|title }}</span></td>
+                    <td>{{ '📦 Yes' if inst.on_consignment else '—' }}</td>
+                    <td>{{ '✓' if inst.verified else '⏳' }}</td>
+                    <td style="color: var(--g500); font-size: 12px; white-space: nowrap;">{{ inst.updated_at.strftime('%b %d') if inst.updated_at else '—' }}</td>
+                </tr>
+                {% endfor %}
+                {% if not instruments.items %}
+                <tr><td colspan="8" style="text-align: center; color: var(--g400); padding: 32px;">No instruments found.</td></tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if instruments.pages > 1 %}
+<div class="pagination">
+    {% for page_num in instruments.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+        {% if page_num %}
+            <a href="{{ url_for('admin.instruments_list', page=page_num, q=search_q, status=status_filter) }}"
+               class="{% if page_num == instruments.page %}current{% endif %}">{{ page_num }}</a>
+        {% else %}
+            <span>…</span>
+        {% endif %}
+    {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

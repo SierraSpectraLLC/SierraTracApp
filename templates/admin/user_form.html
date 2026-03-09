@@ -1,0 +1,60 @@
+{% extends "admin/base.html" %}
+{% block title %}{{ 'Edit User' if edit_user else 'New User' }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h2 class="page-title">{{ 'Edit User' if edit_user else 'New User' }}</h2>
+    </div>
+    <a href="{{ url_for('admin.users_list') }}" class="btn btn-secondary">Back to Users</a>
+</div>
+
+<form method="POST">
+    <div class="card" style="margin-bottom: 16px;">
+        <div class="card-body">
+            <div class="form-grid">
+                <div class="field">
+                    <label class="field-label">Full Name *</label>
+                    <input type="text" name="name" value="{{ edit_user.name if edit_user else '' }}"
+                           class="field-input" placeholder="Joe Smith" required>
+                </div>
+                <div class="field">
+                    <label class="field-label">Email *</label>
+                    <input type="email" name="email" value="{{ edit_user.email if edit_user else '' }}"
+                           class="field-input" placeholder="joe@sierraspectra.com" required>
+                </div>
+                <div class="field">
+                    <label class="field-label">{{ 'New Password (leave blank to keep current)' if edit_user else 'Password *' }}</label>
+                    <input type="password" name="password" class="field-input"
+                           placeholder="••••••••" {{ '' if edit_user else 'required' }}>
+                </div>
+                <div class="field">
+                    <label class="field-label">Role</label>
+                    <select name="role" class="field-input field-select">
+                        {% for r in ['admin', 'engineer', 'seller', 'buyer', 'viewer'] %}
+                        <option value="{{ r }}" {% if edit_user and edit_user.role == r %}selected{% endif %}>{{ r|title }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="field">
+                    <label class="field-label">Organization</label>
+                    <input type="text" name="organization" value="{{ edit_user.organization or '' if edit_user else 'Sierra Spectra' }}"
+                           class="field-input" placeholder="Sierra Spectra">
+                </div>
+                {% if edit_user %}
+                <div class="field" style="padding-top: 24px;">
+                    <div class="field-check">
+                        <input type="checkbox" name="is_active" id="is_active" {% if edit_user.is_active %}checked{% endif %}>
+                        <label for="is_active">Active</label>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary btn-full">
+        {{ 'Update User' if edit_user else 'Create User' }}
+    </button>
+</form>
+{% endblock %}

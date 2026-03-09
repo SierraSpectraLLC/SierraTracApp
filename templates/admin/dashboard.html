@@ -1,0 +1,121 @@
+{% extends "admin/base.html" %}
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h2 class="page-title">Dashboard</h2>
+        <p class="page-sub">SierraTrac platform overview</p>
+    </div>
+    <a href="{{ url_for('admin.instrument_create') }}" class="btn btn-primary">+ New Instrument</a>
+</div>
+
+<!-- Stats -->
+<div class="stat-grid">
+    <div class="stat-card">
+        <div class="stat-num blue">{{ total_instruments }}</div>
+        <div class="stat-label">Total Instruments</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-num green">{{ verified_count }}</div>
+        <div class="stat-label">Verified</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-num amber">{{ pending_count }}</div>
+        <div class="stat-label">Pending Verification</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-num">{{ consignment_count }}</div>
+        <div class="stat-label">On Consignment</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-num">{{ total_records }}</div>
+        <div class="stat-label">Service Records</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-num">{{ total_photos }}</div>
+        <div class="stat-label">Photos</div>
+    </div>
+</div>
+
+<!-- Recent instruments -->
+<div class="card" style="margin-bottom: 24px;">
+    <div class="card-header">
+        <span class="card-title">Recent Instruments</span>
+        <a href="{{ url_for('admin.instruments_list') }}" class="btn btn-secondary btn-sm">View All</a>
+    </div>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>SierraTrac ID</th>
+                    <th>Serial Number</th>
+                    <th>Model</th>
+                    <th>Status</th>
+                    <th>Verified</th>
+                    <th>Created</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for inst in recent_instruments %}
+                <tr>
+                    <td><a href="{{ url_for('admin.instrument_edit', id=inst.id) }}" class="td-link">{{ inst.sierratrac_id }}</a></td>
+                    <td class="td-mono">{{ inst.serial_number }}</td>
+                    <td>{{ inst.model_number or '—' }}</td>
+                    <td>
+                        <span class="badge badge-{{ inst.status|lower|replace('-','') }}">
+                            {{ inst.status|replace('_',' ')|title }}
+                        </span>
+                    </td>
+                    <td>{{ '✓' if inst.verified else '—' }}</td>
+                    <td style="color: var(--g500); font-size: 12px;">{{ inst.created_at.strftime('%b %d, %Y') if inst.created_at else '—' }}</td>
+                </tr>
+                {% endfor %}
+                {% if not recent_instruments %}
+                <tr><td colspan="6" style="text-align: center; color: var(--g400); padding: 24px;">No instruments yet.</td></tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Recent records -->
+<div class="card">
+    <div class="card-header">
+        <span class="card-title">Recent Service Records</span>
+    </div>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Instrument</th>
+                    <th>Type</th>
+                    <th>Title</th>
+                    <th>Engineer</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for rec in recent_records %}
+                <tr>
+                    <td style="font-size: 12px; white-space: nowrap;">{{ rec.service_date.strftime('%b %d, %Y') }}</td>
+                    <td><a href="{{ url_for('admin.instrument_edit', id=rec.instrument_id) }}" class="td-link td-mono">{{ rec.instrument.serial_number }}</a></td>
+                    <td><span class="badge badge-{{ rec.record_type }}">{{ rec.record_type|title }}</span></td>
+                    <td>{{ rec.title }}</td>
+                    <td style="font-size: 12px; color: var(--g500);">{{ rec.engineer_name or '—' }}</td>
+                    <td>
+                        {% if rec.designation %}
+                        <span class="badge badge-{{ rec.designation|lower|replace('-','') }}">{{ rec.designation|title }}</span>
+                        {% else %}—{% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+                {% if not recent_records %}
+                <tr><td colspan="6" style="text-align: center; color: var(--g400); padding: 24px;">No records yet.</td></tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

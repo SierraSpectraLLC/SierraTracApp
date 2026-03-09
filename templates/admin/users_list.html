@@ -1,0 +1,49 @@
+{% extends "admin/base.html" %}
+{% block title %}Users{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h2 class="page-title">Users</h2>
+        <p class="page-sub">Manage team access and roles</p>
+    </div>
+    <a href="{{ url_for('admin.user_create') }}" class="btn btn-primary">+ New User</a>
+</div>
+
+<div class="card">
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Organization</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in users %}
+                <tr>
+                    <td style="font-weight: 600;">{{ u.name }}</td>
+                    <td class="td-mono" style="font-size: 12px;">{{ u.email }}</td>
+                    <td><span class="badge badge-{{ u.role }}">{{ u.role|title }}</span></td>
+                    <td style="font-size: 12px; color: var(--g500);">{{ u.organization or '—' }}</td>
+                    <td>
+                        {% if u.is_active %}
+                        <span class="badge badge-working">Active</span>
+                        {% else %}
+                        <span class="badge badge-unknown">Inactive</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{{ url_for('admin.user_edit', id=u.id) }}" class="btn btn-secondary btn-sm">Edit</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

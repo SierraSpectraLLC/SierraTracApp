@@ -1,0 +1,232 @@
+{% extends "base.html" %}
+{% block title %}{{ instrument.serial_number }} — SierraTrac{% endblock %}
+
+{% block body %}
+<div class="page result-page">
+    <!-- Top bar -->
+    <div class="top-bar">
+        <a href="{{ url_for('main.index') }}" class="back-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <path d="M19 12H5M5 12L12 19M5 12L12 5" stroke="#2471A3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            New search
+        </a>
+        <span class="trac-id-badge">{{ instrument.sierratrac_id }}</span>
+    </div>
+
+    <!-- Instrument card -->
+    <div class="card instrument-card">
+        <div class="instr-image-box">
+            <svg width="48" height="48" viewBox="0 0 48 48" fill="none" opacity="0.35">
+                <rect x="6" y="12" width="36" height="24" rx="3" stroke="#2471A3" stroke-width="1.5"/>
+                <rect x="10" y="16" width="16" height="10" rx="1.5" stroke="#2471A3" stroke-width="1"/>
+                <circle cx="36" cy="21" r="3" stroke="#2471A3" stroke-width="1"/>
+            </svg>
+            <span class="instr-image-label">{{ instrument.model_number }}</span>
+        </div>
+        <div class="instr-details">
+            <div class="badge-row">
+                <span class="status-badge status-{{ instrument.status|lower|replace('-', '') }}">
+                    {{ instrument.status|replace('_', ' ')|title }}
+                </span>
+                {% if instrument.qr_tagged %}
+                <span class="qr-tag">QR Tagged</span>
+                {% endif %}
+                {% if not instrument.verified %}
+                <span class="pending-tag">Pending Verification</span>
+                {% endif %}
+            </div>
+            <h2 class="instr-name">{{ instrument.instrument_type or instrument.model_number }}</h2>
+            <p class="instr-mfg">{{ instrument.manufacturer }}</p>
+
+            <div class="meta-grid">
+                <div class="meta-cell">
+                    <div class="meta-key">Serial No.</div>
+                    <div class="meta-val">{{ instrument.serial_number }}</div>
+                </div>
+                <div class="meta-cell">
+                    <div class="meta-key">Model</div>
+                    <div class="meta-val">{{ instrument.model_number or '—' }}</div>
+                </div>
+                <div class="meta-cell">
+                    <div class="meta-key">Category</div>
+                    <div class="meta-val">{{ instrument.category or '—' }}</div>
+                </div>
+                <div class="meta-cell">
+                    <div class="meta-key">Records</div>
+                    <div class="meta-val">{{ service_records|length }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Consignment banner -->
+    {% if instrument.on_consignment %}
+    <div class="consign-banner">
+        <div class="consign-header">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <path d="M20 7L12 3L4 7M20 7V17L12 21M20 7L12 11M12 21L4 17V7M12 21V11M4 7L12 11" stroke="#B7950B" stroke-width="1.5" stroke-linejoin="round"/>
+            </svg>
+            <span class="consign-title">Available on Consignment</span>
+        </div>
+        <div class="consign-grid">
+            {% if instrument.consignment_location %}
+            <div><span class="consign-key">Location</span><span class="consign-val">{{ instrument.consignment_location }}</span></div>
+            {% endif %}
+            {% if instrument.seller_name %}
+            <div><span class="consign-key">Seller</span><span class="consign-val">{{ instrument.seller_name }}</span></div>
+            {% endif %}
+            {% if instrument.asking_price %}
+            <div><span class="consign-key">Asking Price</span><span class="consign-val price">${{ "{:,.0f}".format(instrument.asking_price) }}</span></div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Tabs -->
+    <div class="tab-row" id="tabRow">
+        <button class="tab-btn active" data-tab="history">History</button>
+        <button class="tab-btn" data-tab="specs">Specs</button>
+        <button class="tab-btn" data-tab="photos">Photos ({{ photos|length }})</button>
+    </div>
+
+    <!-- History tab -->
+    <div class="tab-content" id="tab-history">
+        <div class="section-head">
+            <h3 class="section-label">Documented History</h3>
+            <span class="record-pill">{{ service_records|length }} records</span>
+        </div>
+
+        {% for record in service_records %}
+        <div class="tl-entry">
+            <div class="tl-track">
+                <div class="tl-dot tl-dot-{{ record.record_type }}">
+                    {% if record.record_type == 'inspection' %}⬡
+                    {% elif record.record_type == 'service' %}⬢
+                    {% elif record.record_type == 'qualification' %}◈
+                    {% elif record.record_type == 'purchase' %}◇
+                    {% else %}◻{% endif %}
+                </div>
+                {% if not loop.last %}<div class="tl-line"></div>{% endif %}
+            </div>
+            <div class="tl-card">
+                <button class="tl-header" onclick="this.parentElement.classList.toggle('expanded')">
+                    <div>
+                        <div class="tl-date">{{ record.service_date.strftime('%B %d, %Y') }}</div>
+                        <div class="tl-title">{{ record.title }}</div>
+                        {% if record.engineer_name %}
+                        <div class="tl-engineer">{{ record.engineer_name }}{% if record.organization %}, {{ record.organization }}{% endif %}</div>
+                        {% endif %}
+                    </div>
+                    <div class="tl-right">
+                        {% if record.designation %}
+                        <span class="status-badge status-sm status-{{ record.designation|lower|replace('-', '') }}">
+                            {{ record.designation|replace('_', ' ')|title }}
+                        </span>
+                        {% endif %}
+                        <span class="tl-chevron">▾</span>
+                    </div>
+                </button>
+                <div class="tl-body">
+                    {% if record.summary %}
+                    <p class="tl-summary">{{ record.summary }}</p>
+                    {% endif %}
+
+                    {% if record.findings %}
+                    <div class="findings-card">
+                        <div class="findings-title">Findings</div>
+                        {% for finding in record.findings %}
+                        <div class="finding-row">
+                            <span class="finding-num">{{ "%02d"|format(loop.index) }}</span>
+                            <span class="finding-text">{{ finding }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    {% if record.notes %}
+                    <div class="notes-card">
+                        <div class="notes-label">Engineer Notes</div>
+                        <p class="notes-text">{{ record.notes }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+
+        {% if not service_records %}
+        <div class="empty-state">
+            <p>No service records yet. This instrument was recently registered.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Specs tab -->
+    <div class="tab-content hidden" id="tab-specs">
+        <h3 class="section-label">Technical Specifications</h3>
+        {% if instrument.specs %}
+        <div class="specs-list">
+            {% for key, val in instrument.specs.items() %}
+            <div class="spec-row">
+                <span class="spec-key">{{ key }}</span>
+                <span class="spec-val">{{ val }}</span>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <p>No specifications documented yet.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Photos tab -->
+    <div class="tab-content hidden" id="tab-photos">
+        <h3 class="section-label">Photos</h3>
+        {% if photos %}
+        <div class="photo-list">
+            {% for photo in photos %}
+            <div class="photo-item">
+                <img src="{{ photo.storage_url }}" alt="{{ photo.caption }}" class="photo-img">
+                {% if photo.caption %}
+                <div class="photo-cap">{{ photo.caption }}</div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <p>No photos uploaded yet.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Bottom CTA -->
+    <div class="bottom-cta">
+        <div class="cta-inner">
+            <div>
+                <div class="cta-title">Interested in this instrument?</div>
+                <div class="cta-sub">Contact Sierra Spectra for details.</div>
+            </div>
+            <a href="mailto:info@sierraspectra.com" class="btn btn-primary">Contact</a>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Tab switching
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+            btn.classList.add('active');
+            document.getElementById('tab-' + btn.dataset.tab).classList.remove('hidden');
+        });
+    });
+
+    // Expand first inspection/service record by default
+    const firstExpandable = document.querySelector('.tl-card');
+    if (firstExpandable) firstExpandable.classList.add('expanded');
+</script>
+{% endblock %}

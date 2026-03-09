@@ -1,0 +1,8 @@
+flask==3.1.0
+flask-sqlalchemy==3.1.1
+flask-migrate==4.0.7
+psycopg2-binary==2.9.10
+python-dotenv==1.0.1
+gunicorn==23.0.0
+azure-storage-blob==12.24.0
+werkzeug==3.1.3

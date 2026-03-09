@@ -1,0 +1,243 @@
+{% extends "admin/base.html" %}
+{% block title %}{{ 'Edit ' + instrument.serial_number if instrument else 'New Instrument' }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h2 class="page-title">{{ 'Edit Instrument' if instrument else 'New Instrument' }}</h2>
+        {% if instrument %}
+        <p class="page-sub">{{ instrument.sierratrac_id }} · {{ instrument.serial_number }}</p>
+        {% endif %}
+    </div>
+    <div style="display: flex; gap: 8px;">
+        {% if instrument %}
+        <a href="{{ url_for('main.instrument_detail', sierratrac_id=instrument.sierratrac_id) }}" class="btn btn-secondary" target="_blank">View Public Page ↗</a>
+        {% endif %}
+        <a href="{{ url_for('admin.instruments_list') }}" class="btn btn-secondary">Back to List</a>
+    </div>
+</div>
+
+<form method="POST" style="margin-bottom: 24px;">
+    <div class="card" style="margin-bottom: 16px;">
+        <div class="card-header"><span class="card-title">Instrument Details</span></div>
+        <div class="card-body">
+            <div class="form-grid">
+                <div class="field">
+                    <label class="field-label">Serial Number *</label>
+                    <input type="text" name="serial_number" value="{{ instrument.serial_number if instrument else '' }}"
+                           class="field-input field-mono" placeholder="e.g. JP45821039" required>
+                </div>
+                <div class="field">
+                    <label class="field-label">Model Number</label>
+                    <input type="text" name="model_number" value="{{ instrument.model_number or '' if instrument else '' }}"
+                           class="field-input field-mono" placeholder="e.g. G1330B">
+                </div>
+                <div class="field">
+                    <label class="field-label">Manufacturer</label>
+                    <input type="text" name="manufacturer" value="{{ instrument.manufacturer or '' if instrument else '' }}"
+                           class="field-input" placeholder="e.g. Agilent Technologies">
+                </div>
+                <div class="field">
+                    <label class="field-label">Instrument Type</label>
+                    <input type="text" name="instrument_type" value="{{ instrument.instrument_type or '' if instrument else '' }}"
+                           class="field-input" placeholder="e.g. 1290 Infinity II Multicolumn Thermostat">
+                </div>
+                <div class="field">
+                    <label class="field-label">Category</label>
+                    <select name="category" class="field-input field-select">
+                        <option value="">Select category</option>
+                        {% for cat in ['HPLC/UPLC', 'GC', 'Mass Spec', 'NMR', 'Dissolution', 'UV-Vis', 'Other'] %}
+                        <option value="{{ cat }}" {% if instrument and instrument.category == cat %}selected{% endif %}>{{ cat }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="field">
+                    <label class="field-label">Status</label>
+                    <select name="status" class="field-input field-select">
+                        {% for s in ['UNKNOWN', 'WORKING', 'NON-WORKING', 'REFURBISHED'] %}
+                        <option value="{{ s }}" {% if instrument and instrument.status == s %}selected{% endif %}>{{ s|replace('_',' ')|title }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="field full" style="display: flex; gap: 24px; padding-top: 4px;">
+                    <div class="field-check">
+                        <input type="checkbox" name="qr_tagged" id="qr_tagged" {% if instrument and instrument.qr_tagged %}checked{% endif %}>
+                        <label for="qr_tagged">QR Tagged</label>
+                    </div>
+                    <div class="field-check">
+                        <input type="checkbox" name="verified" id="verified" {% if instrument and instrument.verified %}checked{% endif %}>
+                        <label for="verified">Verified</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Consignment -->
+    <div class="card" style="margin-bottom: 16px;">
+        <div class="card-header">
+            <span class="card-title">Consignment</span>
+            <div class="field-check">
+                <input type="checkbox" name="on_consignment" id="on_consignment"
+                       {% if instrument and instrument.on_consignment %}checked{% endif %}
+                       onchange="document.getElementById('consignFields').style.display = this.checked ? 'grid' : 'none'">
+                <label for="on_consignment">On Consignment</label>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="form-grid" id="consignFields" style="{% if not instrument or not instrument.on_consignment %}display: none;{% endif %}">
+                <div class="field">
+                    <label class="field-label">Location</label>
+                    <input type="text" name="consignment_location" value="{{ instrument.consignment_location or '' if instrument else '' }}"
+                           class="field-input" placeholder="e.g. Sierra Spectra Lab — Oakhurst, CA">
+                </div>
+                <div class="field">
+                    <label class="field-label">Seller</label>
+                    <input type="text" name="seller_name" value="{{ instrument.seller_name or '' if instrument else '' }}"
+                           class="field-input" placeholder="e.g. BioSurplus Inc.">
+                </div>
+                <div class="field">
+                    <label class="field-label">Asking Price ($)</label>
+                    <input type="number" step="0.01" name="asking_price"
+                           value="{{ instrument.asking_price if instrument and instrument.asking_price else '' }}"
+                           class="field-input field-mono" placeholder="12400.00">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Specs -->
+    <div class="card" style="margin-bottom: 16px;">
+        <div class="card-header">
+            <span class="card-title">Specifications</span>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="addSpec()">+ Add Spec</button>
+        </div>
+        <div class="card-body">
+            <div class="specs-editor" id="specsEditor">
+                {% if instrument and instrument.specs %}
+                {% for key, val in instrument.specs.items() %}
+                <div class="spec-pair">
+                    <input type="text" name="spec_key" value="{{ key }}" class="field-input" placeholder="Key (e.g. Temperature Range)" style="font-size: 13px;">
+                    <input type="text" name="spec_val" value="{{ val }}" class="field-input" placeholder="Value (e.g. 4°C to 105°C)" style="font-size: 13px;">
+                    <button type="button" class="spec-remove" onclick="this.parentElement.remove()">✕</button>
+                </div>
+                {% endfor %}
+                {% else %}
+                <div class="spec-pair">
+                    <input type="text" name="spec_key" class="field-input" placeholder="Key" style="font-size: 13px;">
+                    <input type="text" name="spec_val" class="field-input" placeholder="Value" style="font-size: 13px;">
+                    <button type="button" class="spec-remove" onclick="this.parentElement.remove()">✕</button>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary btn-full">
+        {{ 'Update Instrument' if instrument else 'Create Instrument' }}
+    </button>
+</form>
+
+{% if instrument %}
+<!-- Service Records -->
+<div class="card" style="margin-bottom: 16px;">
+    <div class="card-header">
+        <span class="card-title">Service Records ({{ records|length }})</span>
+        <a href="{{ url_for('admin.record_create', instrument_id=instrument.id) }}" class="btn btn-primary btn-sm">+ Add Record</a>
+    </div>
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>Date</th><th>Type</th><th>Title</th><th>Engineer</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody>
+                {% for rec in records %}
+                <tr>
+                    <td style="font-size: 12px; white-space: nowrap;">{{ rec.service_date.strftime('%b %d, %Y') }}</td>
+                    <td><span class="badge">{{ rec.record_type|title }}</span></td>
+                    <td>{{ rec.title }}</td>
+                    <td style="font-size: 12px; color: var(--g500);">{{ rec.engineer_name or '—' }}</td>
+                    <td>
+                        {% if rec.designation %}
+                        <span class="badge badge-{{ rec.designation|lower|replace('-','') }}">{{ rec.designation|title }}</span>
+                        {% else %}—{% endif %}
+                    </td>
+                    <td style="display: flex; gap: 4px;">
+                        <a href="{{ url_for('admin.record_edit', id=rec.id) }}" class="btn btn-secondary btn-sm">Edit</a>
+                        <form method="POST" action="{{ url_for('admin.record_delete', id=rec.id) }}" style="display: inline;"
+                              onsubmit="return confirm('Delete this record?')">
+                            <button class="btn btn-danger btn-sm">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+                {% if not records %}
+                <tr><td colspan="6" style="text-align: center; color: var(--g400); padding: 24px;">No service records yet.</td></tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Photos -->
+<div class="card" style="margin-bottom: 16px;">
+    <div class="card-header">
+        <span class="card-title">Photos ({{ photos|length }})</span>
+    </div>
+    <div class="card-body">
+        <form method="POST" action="{{ url_for('admin.photo_upload', instrument_id=instrument.id) }}" enctype="multipart/form-data"
+              style="display: flex; gap: 8px; align-items: end; margin-bottom: 16px;">
+            <div style="flex: 1;">
+                <label class="field-label">Upload Photos</label>
+                <input type="file" name="photos" multiple accept="image/*" class="field-input" style="padding: 8px;">
+            </div>
+            <div>
+                <input type="text" name="photo_caption" class="field-input" placeholder="Caption (optional)" style="font-size: 13px;">
+            </div>
+            <button type="submit" class="btn btn-primary">Upload</button>
+        </form>
+
+        {% if photos %}
+        <div class="admin-photo-grid">
+            {% for photo in photos %}
+            <div class="admin-photo-card">
+                <img src="{{ photo.storage_url }}" alt="{{ photo.caption }}">
+                <div class="admin-photo-caption">{{ photo.caption or photo.filename }}</div>
+                <form method="POST" action="{{ url_for('admin.photo_delete', id=photo.id) }}" class="admin-photo-delete"
+                      onsubmit="return confirm('Delete this photo?')">
+                    <button class="btn btn-danger btn-sm">✕</button>
+                </form>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Delete instrument -->
+<div class="card" style="border-color: rgba(192,57,43,0.2);">
+    <div class="card-body" style="display: flex; justify-content: space-between; align-items: center;">
+        <div>
+            <div style="font-weight: 600; color: var(--red); font-size: 14px;">Delete Instrument</div>
+            <div style="font-size: 12px; color: var(--g500); margin-top: 2px;">This will permanently remove the instrument and all associated records and photos.</div>
+        </div>
+        <form method="POST" action="{{ url_for('admin.instrument_delete', id=instrument.id) }}"
+              onsubmit="return confirm('Are you sure? This cannot be undone.')">
+            <button class="btn btn-danger">Delete</button>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+<script>
+function addSpec() {
+    const editor = document.getElementById('specsEditor');
+    const pair = document.createElement('div');
+    pair.className = 'spec-pair';
+    pair.innerHTML = `
+        <input type="text" name="spec_key" class="field-input" placeholder="Key" style="font-size: 13px;">
+        <input type="text" name="spec_val" class="field-input" placeholder="Value" style="font-size: 13px;">
+        <button type="button" class="spec-remove" onclick="this.parentElement.remove()">✕</button>
+    `;
+    editor.appendChild(pair);
+}
+</script>
+{% endblock %}

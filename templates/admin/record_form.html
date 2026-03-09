@@ -1,0 +1,107 @@
+{% extends "admin/base.html" %}
+{% block title %}{{ 'Edit Record' if record else 'New Service Record' }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h2 class="page-title">{{ 'Edit Service Record' if record else 'New Service Record' }}</h2>
+        <p class="page-sub">{{ instrument.serial_number }} · {{ instrument.sierratrac_id }}</p>
+    </div>
+    <a href="{{ url_for('admin.instrument_edit', id=instrument.id) }}" class="btn btn-secondary">Back to Instrument</a>
+</div>
+
+<form method="POST" enctype="multipart/form-data">
+    <div class="card" style="margin-bottom: 16px;">
+        <div class="card-header"><span class="card-title">Record Details</span></div>
+        <div class="card-body">
+            <div class="form-grid">
+                <div class="field">
+                    <label class="field-label">Record Type</label>
+                    <select name="record_type" class="field-input field-select">
+                        {% for rt in ['inspection', 'service', 'qualification', 'purchase', 'listing'] %}
+                        <option value="{{ rt }}" {% if record and record.record_type == rt %}selected{% endif %}>{{ rt|title }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="field">
+                    <label class="field-label">Service Date</label>
+                    <input type="date" name="service_date"
+                           value="{{ record.service_date.isoformat() if record else '' }}"
+                           class="field-input" required>
+                </div>
+                <div class="field full">
+                    <label class="field-label">Title *</label>
+                    <input type="text" name="title" value="{{ record.title if record else '' }}"
+                           class="field-input" placeholder="e.g. Intake Inspection — Consignment" required>
+                </div>
+                <div class="field">
+                    <label class="field-label">Engineer Name</label>
+                    <input type="text" name="engineer_name" value="{{ record.engineer_name or '' if record else '' }}"
+                           class="field-input" placeholder="e.g. M. Torres">
+                </div>
+                <div class="field">
+                    <label class="field-label">Organization</label>
+                    <input type="text" name="organization" value="{{ record.organization or '' if record else 'Sierra Spectra' }}"
+                           class="field-input" placeholder="e.g. Sierra Spectra">
+                </div>
+                <div class="field">
+                    <label class="field-label">Designation</label>
+                    <select name="designation" class="field-input field-select">
+                        <option value="">No designation</option>
+                        {% for d in ['WORKING', 'NON-WORKING', 'REFURBISHED'] %}
+                        <option value="{{ d }}" {% if record and record.designation == d %}selected{% endif %}>{{ d|replace('_',' ')|title }}</option>
+                        {% endfor %}
+                    </select>
+                    <div class="field-hint">Setting a designation will update the instrument's current status.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card" style="margin-bottom: 16px;">
+        <div class="card-header"><span class="card-title">Summary &amp; Findings</span></div>
+        <div class="card-body">
+            <div class="field" style="margin-bottom: 16px;">
+                <label class="field-label">Summary</label>
+                <textarea name="summary" class="field-input field-textarea"
+                          placeholder="Describe what was done, what was observed...">{{ record.summary or '' if record else '' }}</textarea>
+            </div>
+
+            <div class="field" style="margin-bottom: 16px;">
+                <label class="field-label">Findings (one per line)</label>
+                <textarea name="findings_text" class="field-input field-textarea field-mono" style="min-height: 140px;"
+                          placeholder="Peltier module failure — unable to maintain setpoint below 18°C&#10;Column compartment door sensor intermittent&#10;Firmware version 2.1.03 — two revisions behind">{% if record and record.findings %}{% for f in record.findings %}{{ f }}{% if not loop.last %}
+{% endif %}{% endfor %}{% endif %}</textarea>
+                <div class="field-hint">Each line becomes a numbered finding in the report.</div>
+            </div>
+
+            <div class="field">
+                <label class="field-label">Engineer Notes</label>
+                <textarea name="notes" class="field-input field-textarea"
+                          placeholder="Recommendations, repair estimates, follow-up actions...">{{ record.notes or '' if record else '' }}</textarea>
+            </div>
+        </div>
+    </div>
+
+    {% if not record %}
+    <div class="card" style="margin-bottom: 16px;">
+        <div class="card-header"><span class="card-title">Attach Photos</span></div>
+        <div class="card-body">
+            <div class="field">
+                <label class="field-label">Photos</label>
+                <input type="file" name="photos" multiple accept="image/*" class="field-input" style="padding: 8px;">
+                <div class="field-hint">Select multiple files. Max 16MB each. JPG, PNG, or WebP.</div>
+            </div>
+            <div class="field" style="margin-top: 12px;">
+                <label class="field-label">Caption (applies to all photos in this batch)</label>
+                <input type="text" name="photo_caption" class="field-input" placeholder="e.g. Front panel — cosmetic wear on housing">
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <button type="submit" class="btn btn-primary btn-full">
+        {{ 'Update Record' if record else 'Create Service Record' }}
+    </button>
+</form>
+{% endblock %}

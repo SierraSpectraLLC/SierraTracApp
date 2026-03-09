@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}Register Instrument — SierraTrac{% endblock %}
+
+{% block body %}
+<div class="page result-page">
+    <div class="top-bar">
+        <a href="{{ url_for('main.index') }}" class="back-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <path d="M19 12H5M5 12L12 19M5 12L12 5" stroke="#2471A3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            New search
+        </a>
+    </div>
+
+    <div class="form-container">
+        <div class="form-header">
+            <h2 class="form-title">Register Instrument</h2>
+            <p class="form-sub">Add this instrument to SierraTrac to start building its lifecycle record.</p>
+        </div>
+
+        <form action="{{ url_for('main.register_instrument') }}" method="POST">
+            <div class="card form-card">
+                <div class="field-group">
+                    <label class="field-label">Serial Number *</label>
+                    <input type="text" name="serial_number" value="{{ prefill_sn }}"
+                           class="field-input mono" placeholder="e.g. JP45821039" required>
+                </div>
+
+                <div class="field-group">
+                    <label class="field-label">Model Number</label>
+                    <input type="text" name="model_number" class="field-input mono" placeholder="e.g. G1330B">
+                </div>
+
+                <div class="field-group">
+                    <label class="field-label">Manufacturer</label>
+                    <input type="text" name="manufacturer" class="field-input" placeholder="e.g. Agilent Technologies">
+                </div>
+
+                <div class="field-group">
+                    <label class="field-label">Category</label>
+                    <div class="chip-row">
+                        {% for cat in ['HPLC/UPLC', 'GC', 'Mass Spec', 'NMR', 'Dissolution', 'Other'] %}
+                        <label class="chip-option">
+                            <input type="radio" name="category" value="{{ cat }}" hidden>
+                            <span>{{ cat }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="field-group">
+                    <label class="field-label">Condition (if known)</label>
+                    <div class="chip-row">
+                        {% for c in ['Working', 'Non-Working', 'Unknown'] %}
+                        <label class="chip-option">
+                            <input type="radio" name="condition" value="{{ c }}" hidden>
+                            <span>{{ c }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="field-group">
+                    <label class="field-label">Notes</label>
+                    <textarea name="notes" class="field-input field-textarea"
+                              placeholder="Any additional context — purchase source, known issues, etc."
+                              rows="3"></textarea>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-full">Register Instrument</button>
+        </form>
+
+        <p class="disclaimer">Self-registered instruments appear as "Pending Verification" until inspected by an authorized service organization.</p>
+    </div>
+</div>
+
+<script>
+    // Chip selection behavior
+    document.querySelectorAll('.chip-option').forEach(chip => {
+        chip.addEventListener('click', () => {
+            const group = chip.closest('.chip-row');
+            group.querySelectorAll('.chip-option').forEach(c => c.classList.remove('selected'));
+            chip.classList.add('selected');
+        });
+    });
+</script>
+{% endblock %}
