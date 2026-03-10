@@ -28,9 +28,10 @@ def create_app(config_name=None):
     if app.config.get("USE_LOCAL_STORAGE"):
         os.makedirs(app.config.get("LOCAL_UPLOAD_FOLDER", "static/uploads"), exist_ok=True)
 
-    # Create tables if they don't exist (dev convenience)
+    # Create tables in dev only — production uses flask db upgrade via startup.sh
     with app.app_context():
-        db.create_all()
+        if app.config.get("USE_LOCAL_STORAGE"):
+            db.create_all()
 
     return app
 

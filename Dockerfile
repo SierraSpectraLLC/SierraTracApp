@@ -20,5 +20,8 @@ RUN mkdir -p static/uploads
 # Expose port
 EXPOSE 8000
 
-# Run with gunicorn
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "4", "app:create_app('production')"]
+# Make startup script executable
+RUN chmod +x startup.sh
+
+# Run migrations then start Gunicorn
+CMD ["/bin/bash", "startup.sh"]
