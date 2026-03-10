@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}Request Submitted — {{ instrument.serial_number }}{% endblock %}
+
+{% block body %}
+<div class="page result-page">
+    <!-- Top bar -->
+    <div class="top-bar">
+        <a href="{{ url_for('main.index') }}" class="back-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <path d="M19 12H5M5 12L12 19M5 12L12 5" stroke="#2471A3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Home
+        </a>
+        <span class="trac-id-badge">{{ instrument.sierratrac_id }}</span>
+    </div>
+
+    <!-- Confirmation card -->
+    <div class="card" style="padding: 2rem 1.25rem; text-align: center;">
+        <div style="margin-bottom: 1rem;">
+            <svg width="56" height="56" viewBox="0 0 56 56" fill="none" style="display: inline-block;">
+                <circle cx="28" cy="28" r="27" stroke="#27AE60" stroke-width="2"/>
+                <path d="M16 28L24 36L40 20" stroke="#27AE60" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </div>
+        <h2 style="font-size: 1.2rem; font-weight: 600; margin-bottom: 0.4rem; color: #1a1a1a;">
+            Request Submitted
+        </h2>
+        <p style="font-size: 0.9rem; color: #555; margin-bottom: 1.5rem;">
+            Your service request has been logged and the ISO engineering team has been notified.
+        </p>
+
+        <!-- Request summary -->
+        <div style="background: #f7f8fa; border-radius: 8px; padding: 1rem; text-align: left; margin-bottom: 1.5rem;">
+            <div class="meta-grid">
+                <div class="meta-cell">
+                    <div class="meta-key">Request ID</div>
+                    <div class="meta-val" style="font-family: 'IBM Plex Mono', monospace; font-size: 0.9rem;">
+                        {{ sr.request_id }}
+                    </div>
+                </div>
+                <div class="meta-cell">
+                    <div class="meta-key">Urgency</div>
+                    <div class="meta-val">{{ sr.urgency }}</div>
+                </div>
+                <div class="meta-cell">
+                    <div class="meta-key">Instrument</div>
+                    <div class="meta-val">{{ instrument.serial_number }}</div>
+                </div>
+                <div class="meta-cell">
+                    <div class="meta-key">Status</div>
+                    <div class="meta-val">
+                        <span style="color: #E67E22; font-weight: 500;">Pending Review</span>
+                    </div>
+                </div>
+            </div>
+
+            {% if sr.description %}
+            <div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #e8e8e8;">
+                <div class="meta-key" style="margin-bottom: 0.25rem;">Description</div>
+                <p style="font-size: 0.875rem; color: #333; margin: 0;">{{ sr.description }}</p>
+            </div>
+            {% endif %}
+
+            {% if sr.error_codes %}
+            <div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #e8e8e8;">
+                <div class="meta-key" style="margin-bottom: 0.35rem;">Error Codes</div>
+                <div style="display: flex; flex-wrap: wrap; gap: 0.35rem;">
+                    {% for code in sr.error_codes %}
+                    <span style="background: #EBF5FB; color: #2471A3; border-radius: 4px; padding: 0.2rem 0.5rem; font-size: 0.8rem; font-family: 'IBM Plex Mono', monospace;">
+                        {{ code }}
+                    </span>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <p style="font-size: 0.82rem; color: #888;">
+            An ISO engineer will review and respond to this request. No further action is needed from you at this time.
+        </p>
+    </div>
+
+    <!-- Action buttons -->
+    <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1rem;">
+        <a href="{{ url_for('main.instrument_detail', sierratrac_id=instrument.sierratrac_id) }}" class="btn btn-primary" style="text-align: center;">
+            View Instrument
+        </a>
+        <a href="{{ url_for('main.index') }}" class="btn" style="text-align: center; background: #f0f0f0; color: #333;">
+            Back to Home
+        </a>
+    </div>
+</div>
+{% endblock %}

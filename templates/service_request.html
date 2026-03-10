@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+{% block title %}Request Service — {{ instrument.serial_number }}{% endblock %}
+
+{% block body %}
+<div class="page result-page">
+    <!-- Top bar -->
+    <div class="top-bar">
+        <a href="{{ url_for('main.instrument_detail', sierratrac_id=instrument.sierratrac_id) }}" class="back-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <path d="M19 12H5M5 12L12 19M5 12L12 5" stroke="#2471A3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Back
+        </a>
+        <span class="trac-id-badge">{{ instrument.sierratrac_id }}</span>
+    </div>
+
+    <!-- Instrument summary -->
+    <div class="card instrument-card">
+        <div class="instr-image-box">
+            <svg width="48" height="48" viewBox="0 0 48 48" fill="none" opacity="0.35">
+                <rect x="6" y="12" width="36" height="24" rx="3" stroke="#2471A3" stroke-width="1.5"/>
+                <rect x="10" y="16" width="16" height="10" rx="1.5" stroke="#2471A3" stroke-width="1"/>
+                <circle cx="36" cy="21" r="3" stroke="#2471A3" stroke-width="1"/>
+            </svg>
+            <span class="instr-image-label">{{ instrument.model_number }}</span>
+        </div>
+        <div class="instr-details">
+            <h2 class="instr-name">{{ instrument.instrument_type or instrument.model_number }}</h2>
+            <p class="instr-mfg">{{ instrument.manufacturer }}</p>
+            <div class="meta-grid">
+                <div class="meta-cell">
+                    <div class="meta-key">Serial No.</div>
+                    <div class="meta-val">{{ instrument.serial_number }}</div>
+                </div>
+                <div class="meta-cell">
+                    <div class="meta-key">Status</div>
+                    <div class="meta-val">
+                        <span class="status-badge status-{{ instrument.status|lower|replace('-', '') }}">
+                            {{ instrument.status|replace('_', ' ')|title }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Service request form -->
+    <div class="card" style="padding: 1.25rem;">
+        <h3 class="section-label" style="margin-bottom: 1rem;">Request Service</h3>
+
+        <form method="POST" enctype="multipart/form-data" style="display: flex; flex-direction: column; gap: 1.25rem;">
+
+            <!-- Urgency -->
+            <div class="form-group">
+                <label class="form-label">Urgency <span style="color:#c0392b">*</span></label>
+                <div style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.25rem;">
+                    {% for level in ['Critical', 'High', 'Medium', 'Low'] %}
+                    <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.9rem;">
+                        <input type="radio" name="urgency" value="{{ level }}" required
+                            {% if level == 'High' %}checked{% endif %}
+                            style="accent-color: #2471A3;">
+                        <span>{{ level }}</span>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Description -->
+            <div class="form-group">
+                <label class="form-label" for="description">
+                    Description <span style="color:#c0392b">*</span>
+                </label>
+                <textarea
+                    id="description"
+                    name="description"
+                    required
+                    rows="4"
+                    placeholder="Describe the issue observed…"
+                    class="form-input"
+                    style="resize: vertical;"
+                ></textarea>
+            </div>
+
+            <!-- Error codes -->
+            <div class="form-group">
+                <label class="form-label">Error Codes (select all that apply)</label>
+                <div style="display: flex; flex-direction: column; gap: 0.4rem; margin-top: 0.25rem;">
+                    {% for code in ['E01 – Pressure out of range', 'E02 – Flow rate error', 'E03 – Temperature fault', 'E04 – Detector signal lost', 'E05 – Communication timeout', 'E06 – Leak detected', 'E07 – Pump failure', 'E08 – Autosampler error'] %}
+                    <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.875rem;">
+                        <input type="checkbox" name="error_codes" value="{{ code }}"
+                            style="accent-color: #2471A3;">
+                        <span>{{ code }}</span>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Custom error -->
+            <div class="form-group">
+                <label class="form-label" for="custom_error">Other / Custom Error Code</label>
+                <input
+                    type="text"
+                    id="custom_error"
+                    name="custom_error"
+                    placeholder="Enter code or message if not listed above"
+                    class="form-input"
+                >
+            </div>
+
+            <!-- Impact -->
+            <div class="form-group">
+                <label class="form-label" for="impact">Operational Impact</label>
+                <input
+                    type="text"
+                    id="impact"
+                    name="impact"
+                    placeholder="e.g. Instrument offline, run halted…"
+                    class="form-input"
+                >
+            </div>
+
+            <!-- Photos -->
+            <div class="form-group">
+                <label class="form-label" for="photos">Attach Photos (optional)</label>
+                <input
+                    type="file"
+                    id="photos"
+                    name="photos"
+                    multiple
+                    accept="image/*"
+                    style="font-size: 0.875rem; color: #555;"
+                >
+                <p style="font-size: 0.78rem; color: #888; margin-top: 0.25rem;">
+                    You may attach one or more images of the issue.
+                </p>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.85rem;">
+                Submit Service Request
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}
